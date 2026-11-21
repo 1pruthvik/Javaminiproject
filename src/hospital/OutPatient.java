@@ -18,28 +18,24 @@ public class OutPatient extends Patient {
     private double diagnosticCharges;
 
     /**
-     * Full constructor for OutPatient.
-     *
-     * @param name                patient name
-     * @param age                 patient age
-     * @param consultationCharges outpatient consultation fee (non-negative)
-     * @param treatmentCharges    procedure/medication fee (non-negative)
-     * @param diagnosticCharges   lab/imaging fee (non-negative)
+     * Full constructor with explicit user-provided patient ID.
+     */
+    public OutPatient(int id, String name, int age, double consultationCharges,
+                      double treatmentCharges, double diagnosticCharges) {
+        super(id, name, age);
+        validateCharges(consultationCharges, treatmentCharges, diagnosticCharges);
+        this.consultationCharges = consultationCharges;
+        this.treatmentCharges = treatmentCharges;
+        this.diagnosticCharges = diagnosticCharges;
+    }
+
+    /**
+     * Full constructor with auto-generated ID.
      */
     public OutPatient(String name, int age, double consultationCharges,
                       double treatmentCharges, double diagnosticCharges) {
         super(name, age);
-
-        if (consultationCharges < 0) {
-            throw new IllegalArgumentException("Consultation charges cannot be negative: " + consultationCharges);
-        }
-        if (treatmentCharges < 0) {
-            throw new IllegalArgumentException("Treatment charges cannot be negative: " + treatmentCharges);
-        }
-        if (diagnosticCharges < 0) {
-            throw new IllegalArgumentException("Diagnostic charges cannot be negative: " + diagnosticCharges);
-        }
-
+        validateCharges(consultationCharges, treatmentCharges, diagnosticCharges);
         this.consultationCharges = consultationCharges;
         this.treatmentCharges = treatmentCharges;
         this.diagnosticCharges = diagnosticCharges;
@@ -50,6 +46,18 @@ public class OutPatient extends Patient {
      */
     public OutPatient(String name, int age, double consultationFee, double medicineCost) {
         this(name, age, consultationFee, medicineCost, 0.0);
+    }
+
+    private static void validateCharges(double consult, double treat, double diag) {
+        if (consult < 0) {
+            throw new IllegalArgumentException("Consultation charges cannot be negative: " + consult);
+        }
+        if (treat < 0) {
+            throw new IllegalArgumentException("Treatment charges cannot be negative: " + treat);
+        }
+        if (diag < 0) {
+            throw new IllegalArgumentException("Diagnostic charges cannot be negative: " + diag);
+        }
     }
 
     // Getters

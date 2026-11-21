@@ -7,6 +7,7 @@ package hospital;
  *   - Multithreading and Synchronization
  *   - Critical Section protection
  *   - Shared Resource Management
+ *   - Bed slot occupant tracking
  *   - Throwing custom checked exception (BedNotAvailableException)
  *
  * Concurrency Guarantee:
@@ -28,6 +29,7 @@ public class BedManager {
     private int availableBeds;
     private int occupiedBeds;
     private final boolean[] bedOccupancy;
+    private final InPatient[] bedSlots;
 
     /**
      * Initializes the bed manager with a fixed capacity.
@@ -42,6 +44,7 @@ public class BedManager {
         this.availableBeds = totalBeds;
         this.occupiedBeds = 0;
         this.bedOccupancy = new boolean[totalBeds];
+        this.bedSlots = new InPatient[totalBeds];
     }
 
     /**
@@ -74,6 +77,7 @@ public class BedManager {
         for (int i = 0; i < totalBeds; i++) {
             if (!bedOccupancy[i]) {
                 bedOccupancy[i] = true;
+                bedSlots[i] = patient;
                 assignedBed = i + 1; // 1-based indexing for bed number
                 break;
             }
@@ -128,6 +132,7 @@ public class BedManager {
             int slot = patient.getBedNumber() - 1;
             if (bedOccupancy[slot]) {
                 bedOccupancy[slot] = false;
+                bedSlots[slot] = null;
                 patient.setBedNumber(0);
                 occupiedBeds--;
                 availableBeds++;
@@ -143,12 +148,33 @@ public class BedManager {
             for (int i = totalBeds - 1; i >= 0; i--) {
                 if (bedOccupancy[i]) {
                     bedOccupancy[i] = false;
+                    bedSlots[i] = null;
                     break;
                 }
             }
             occupiedBeds--;
             availableBeds++;
         }
+    }
+
+    /**
+     * Returns the patient occupying a specific bed (1-based bed number).
+     */
+    public synchronized InPatient getBedOccupant(int bedNumber) {
+        if (bedNumber >= 1 && bedNumber <= totalBeds) {
+            return bedSlots[bedNumber - 1];
+        }
+        return null;
+    }
+
+    /**
+     * Checks if a specific bed is occupied (1-based bed number).
+     */
+    public synchronized boolean isBedOccupied(int bedNumber) {
+        if (bedNumber >= 1 && bedNumber <= totalBeds) {
+            return bedOccupancy[bedNumber - 1];
+        }
+        return false;
     }
 
     // Synchronized getters for shared resource state

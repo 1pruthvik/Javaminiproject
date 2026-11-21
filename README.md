@@ -1,6 +1,6 @@
 # Hospital Patient Management System (P11)
 
-A robust, enterprise-grade Java OOP and Multithreading demonstration project implementing a complete Hospital Patient Management System.
+A robust, enterprise-grade, fully interactive Java OOP and Multithreading demonstration project implementing a complete Hospital Patient Management System.
 
 ## Architecture and Core Concepts
 
@@ -16,6 +16,8 @@ A robust, enterprise-grade Java OOP and Multithreading demonstration project imp
 10. **Multithreading**: Concurrent execution of `Emergency` and `General` admission threads (`AdmissionCounter extends Thread`).
 11. **Synchronization**: Atomic critical section in `BedManager.allocateBed(InPatient)` protecting bed availability checks, allocation, bed count updates, and admission confirmation.
 12. **Shared Resource Management**: Competing threads safely coordinate over a single shared `BedManager` without race conditions or capacity violations.
+13. **Central Patient Registry**: Thread-safe `Map<Integer, Patient>` storing all registered inpatients and outpatients with unique IDs.
+14. **User-Driven Console Input**: No hardcoded data. All hospital capacity, patient details, financial charges, and multithreading requests are entered dynamically at runtime through an interactive console menu.
 
 ## Billing Formulas
 
@@ -23,6 +25,27 @@ A robust, enterprise-grade Java OOP and Multithreading demonstration project imp
 - **OutPatient Bill**: `Consultation Charges + Treatment Charges + Diagnostic Charges`
 
 *Note: Outpatients do not consume hospital inpatient beds.*
+
+## Interactive Menu Options
+
+```
+========================================
+       HOSPITAL PATIENT MANAGEMENT      
+========================================
+1.  Register Inpatient
+2.  Register Outpatient
+3.  Display All Patients
+4.  Search Patient by ID
+5.  Assign Doctor
+6.  Calculate Patient Bill
+7.  Display Hospital Statistics
+8.  Display Bed Availability
+9.  Start Emergency Admission Thread
+10. Start General Admission Thread
+11. Display Admission Counter
+12. Exit
+========================================
+```
 
 ## Project Structure
 
@@ -41,7 +64,7 @@ Java_Mini_project/
         ├── OutPatient.java              # OutPatient subclass
         ├── BedManager.java              # Synchronized shared bed allocator
         ├── AdmissionCounter.java        # Thread subclass for concurrent admissions
-        ├── HospitalMain.java            # Main entry point (Full demonstration)
+        ├── HospitalMain.java            # Interactive Menu-Driven Main entry point
         └── HospitalSystemTest.java      # Comprehensive automated verification suite
 ```
 
@@ -51,9 +74,9 @@ Java_Mini_project/
 ```powershell
 # Compile all sources into bin directory
 mkdir -Force bin
-javac -d bin src/hospital/*.java
+javac -d bin src\hospital\*.java
 
-# Run the complete demonstration
+# Run the interactive menu-driven application
 java -cp bin hospital.HospitalMain
 
 # Run the automated verification test suite

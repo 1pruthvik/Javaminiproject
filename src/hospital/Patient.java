@@ -7,9 +7,9 @@ package hospital;
  * Demonstrates:
  *   - Abstract class and abstract method (calculateBill)
  *   - Static variable (admissionCounter for successfully admitted patients)
- *   - Static id generator for unique patient IDs
+ *   - Unique patient ID (user-provided or auto-sequenced)
  *   - "this" keyword for field initialization
- *   - Input validation (non-negative age, valid name)
+ *   - Input validation (non-negative age, valid name, positive ID)
  *   - Information hiding and encapsulation
  */
 public abstract class Patient implements Treatable {
@@ -27,7 +27,37 @@ public abstract class Patient implements Treatable {
     private boolean admitted = false;
 
     /**
-     * Constructs a patient with validated name and age.
+     * Constructs a patient with user-specified unique ID, validated name, and age.
+     *
+     * @param id   unique patient ID (must be > 0)
+     * @param name patient's full name (non-null, non-empty)
+     * @param age  patient's age (non-negative)
+     */
+    public Patient(int id, String name, int age) {
+        if (id <= 0) {
+            throw new IllegalArgumentException("Patient ID must be greater than zero: " + id);
+        }
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Patient name cannot be null or empty.");
+        }
+        if (age < 0) {
+            throw new IllegalArgumentException("Patient age cannot be negative: " + age);
+        }
+
+        this.id = id;
+        this.name = name.trim();
+        this.age = age;
+        this.doctorName = null;
+
+        synchronized (Patient.class) {
+            if (id > idSequence) {
+                idSequence = id;
+            }
+        }
+    }
+
+    /**
+     * Constructs a patient with auto-generated unique ID, validated name, and age.
      *
      * @param name patient's full name (non-null, non-empty)
      * @param age  patient's age (non-negative)

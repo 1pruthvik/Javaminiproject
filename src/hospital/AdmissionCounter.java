@@ -3,6 +3,7 @@ package hospital;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * AdmissionCounter: Multithreaded admission counter.
@@ -12,6 +13,7 @@ import java.util.List;
  *   - Competing for a shared resource (BedManager)
  *   - Handling custom BedNotAvailableException
  *   - Robust try-catch-finally block execution
+ *   - Integration with central patient registry
  *   - Meaningful thread naming and logging
  */
 public class AdmissionCounter extends Thread {
@@ -19,23 +21,40 @@ public class AdmissionCounter extends Thread {
     private final String counterType;
     private final BedManager bedManager;
     private final List<InPatient> patientRequests;
+    private final Map<Integer, Patient> patientRegistry;
     private final List<InPatient> admittedPatients = new ArrayList<>();
     private final List<InPatient> rejectedPatients = new ArrayList<>();
 
     /**
-     * Constructor accepting an array of patient names and generating InPatient admission requests.
-     *
-     * @param counterType  "Emergency" or "General"
-     * @param bedManager   shared BedManager resource
-     * @param patientNames array of patient names requesting admission
+     * Primary constructor accepting pre-constructed InPatient admission requests
+     * and a shared central patient registry.
+     */
+    public AdmissionCounter(String counterType, BedManager bedManager,
+                            List<InPatient> patientRequests, Map<Integer, Patient> patientRegistry) {
+        super(counterType + "-Admission-Thread");
+        this.counterType = counterType;
+        this.bedManager = bedManager;
+        this.patientRequests = new ArrayList<>(patientRequests);
+        this.patientRegistry = patientRegistry;
+    }
+
+    /**
+     * Overloaded constructor without central registry (for backwards compatibility).
+     */
+    public AdmissionCounter(String counterType, BedManager bedManager, List<InPatient> patientRequests) {
+        this(counterType, bedManager, patientRequests, null);
+    }
+
+    /**
+     * Overloaded constructor accepting an array of patient names.
      */
     public AdmissionCounter(String counterType, BedManager bedManager, String[] patientNames) {
         super(counterType + "-Admission-Thread");
         this.counterType = counterType;
         this.bedManager = bedManager;
+        this.patientRegistry = null;
         this.patientRequests = new ArrayList<>();
 
-        // Generate realistic InPatient requests for each name
         int baseAge = counterType.equalsIgnoreCase("Emergency") ? 52 : 36;
         for (int i = 0; i < patientNames.length; i++) {
             String name = patientNames[i];
@@ -47,19 +66,9 @@ public class AdmissionCounter extends Thread {
         }
     }
 
-    /**
-     * Constructor accepting pre-constructed InPatient admission requests.
-     */
-    public AdmissionCounter(String counterType, BedManager bedManager, List<InPatient> patientRequests) {
-        super(counterType + "-Admission-Thread");
-        this.counterType = counterType;
-        this.bedManager = bedManager;
-        this.patientRequests = new ArrayList<>(patientRequests);
-    }
-
     @Override
     public void run() {
-        System.out.printf("[%s] Started admission processing queue of %d patient(s).%n",
+        System.out.printf("[%s] Processing queue of %d patient admission request(s)...%n",
                 getName(), patientRequests.size());
 
         for (InPatient patient : patientRequests) {
@@ -68,14 +77,21 @@ public class AdmissionCounter extends Thread {
                 // Synchronized bed allocation protecting the complete critical section
                 int bedsLeft = bedManager.allocateBed(patient);
 
-                // Assign appropriate doctor via Treatable interface
-                String doctor = counterType.equalsIgnoreCase("Emergency")
-                        ? "Dr. Adams (Emergency Care Specialist)"
-                        : "Dr. Clark (Internal Medicine Consultant)";
-                patient.assignDoctor(doctor);
+                // Assign appropriate doctor via Treatable interface if not yet assigned
+                if (patient.getDoctorName() == null) {
+                    String doctor = counterType.equalsIgnoreCase("Emergency")
+                            ? "Dr. Adams (Emergency Care Specialist)"
+                            : "Dr. Clark (Internal Medicine Consultant)";
+                    patient.assignDoctor(doctor);
+                }
 
                 admissionSuccessful = true;
                 admittedPatients.add(patient);
+
+                // Update central registry if provided
+                if (patientRegistry != null) {
+                    patientRegistry.put(patient.getId(), patient);
+                }
 
                 System.out.printf("[%s] [SUCCESS] Admitted %s (ID: %d) -> Assigned Bed #%d | Doctor: %s | Bill: $%.2f | Beds Left: %d%n",
                         getName(), patient.getName(), patient.getId(), patient.getBedNumber(),
@@ -104,7 +120,7 @@ public class AdmissionCounter extends Thread {
             }
         }
 
-        System.out.printf("[%s] Finished all requests. Total admitted: %d, Total rejected: %d.%n",
+        System.out.printf("[%s] Batch complete. Admitted: %d, Rejected: %d.%n",
                 getName(), admittedPatients.size(), rejectedPatients.size());
     }
 
@@ -114,6 +130,10 @@ public class AdmissionCounter extends Thread {
 
     public List<InPatient> getRejectedPatients() {
         return Collections.unmodifiableList(rejectedPatients);
+    }
+
+    public int getRequestCount() {
+        return patientRequests.size();
     }
 
     public String getCounterType() {

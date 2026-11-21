@@ -21,32 +21,25 @@ public class InPatient extends Patient {
     private int bedNumber = 0; // 0 indicates bed not yet assigned
 
     /**
-     * Full constructor for InPatient with all billing components.
-     *
-     * @param name             patient name
-     * @param age              patient age
-     * @param daysAdmitted     number of days in hospital (non-negative)
-     * @param dailyRoomCharges daily room charge rate (non-negative)
-     * @param doctorCharges    consultation charges (non-negative)
-     * @param treatmentCharges medical treatment charges (non-negative)
+     * Full constructor with explicit user-provided patient ID.
+     */
+    public InPatient(int id, String name, int age, int daysAdmitted, double dailyRoomCharges,
+                     double doctorCharges, double treatmentCharges) {
+        super(id, name, age);
+        validateCharges(daysAdmitted, dailyRoomCharges, doctorCharges, treatmentCharges);
+        this.daysAdmitted = daysAdmitted;
+        this.dailyRoomCharges = dailyRoomCharges;
+        this.doctorCharges = doctorCharges;
+        this.treatmentCharges = treatmentCharges;
+    }
+
+    /**
+     * Full constructor with auto-generated ID.
      */
     public InPatient(String name, int age, int daysAdmitted, double dailyRoomCharges,
                      double doctorCharges, double treatmentCharges) {
         super(name, age);
-
-        if (daysAdmitted < 0) {
-            throw new IllegalArgumentException("Days admitted cannot be negative: " + daysAdmitted);
-        }
-        if (dailyRoomCharges < 0) {
-            throw new IllegalArgumentException("Daily room charges cannot be negative: " + dailyRoomCharges);
-        }
-        if (doctorCharges < 0) {
-            throw new IllegalArgumentException("Doctor consultation charges cannot be negative: " + doctorCharges);
-        }
-        if (treatmentCharges < 0) {
-            throw new IllegalArgumentException("Treatment charges cannot be negative: " + treatmentCharges);
-        }
-
+        validateCharges(daysAdmitted, dailyRoomCharges, doctorCharges, treatmentCharges);
         this.daysAdmitted = daysAdmitted;
         this.dailyRoomCharges = dailyRoomCharges;
         this.doctorCharges = doctorCharges;
@@ -58,6 +51,21 @@ public class InPatient extends Patient {
      */
     public InPatient(String name, int age, int daysAdmitted, double dailyCharge) {
         this(name, age, daysAdmitted, dailyCharge, 0.0, 0.0);
+    }
+
+    private static void validateCharges(int days, double room, double doc, double treat) {
+        if (days < 0) {
+            throw new IllegalArgumentException("Days admitted cannot be negative: " + days);
+        }
+        if (room < 0) {
+            throw new IllegalArgumentException("Daily room charges cannot be negative: " + room);
+        }
+        if (doc < 0) {
+            throw new IllegalArgumentException("Doctor consultation charges cannot be negative: " + doc);
+        }
+        if (treat < 0) {
+            throw new IllegalArgumentException("Treatment charges cannot be negative: " + treat);
+        }
     }
 
     // Getters and Setters
