@@ -1,53 +1,139 @@
 package hospital;
 
 /**
- * Patient (requirement: Class with ID, name, age + "this" + static admission counter).
+ * Patient: Abstract base class representing a hospital patient.
  *
- * This class is declared abstract so that it cannot be created directly.
- * InPatient and OutPatient extend it and provide their own calculateBill().
- *
- * It implements Treatable so every patient can be assigned a doctor.
+ * Implements Treatable interface so any patient can be assigned a doctor.
+ * Demonstrates:
+ *   - Abstract class and abstract method (calculateBill)
+ *   - Static variable (admissionCounter for successfully admitted patients)
+ *   - Static id generator for unique patient IDs
+ *   - "this" keyword for field initialization
+ *   - Input validation (non-negative age, valid name)
+ *   - Information hiding and encapsulation
  */
 public abstract class Patient implements Treatable {
 
-    // Static admission counter: shared by ALL patients, counts total admissions.
+    // Thread-safe sequence generator for unique patient IDs across all requests
+    private static int idSequence = 0;
+
+    // Static admission counter tracking successfully admitted patients only
     private static int admissionCounter = 0;
 
-    private int id;
+    private final int id;
     private String name;
     private int age;
     private String doctorName;
+    private boolean admitted = false;
 
+    /**
+     * Constructs a patient with validated name and age.
+     *
+     * @param name patient's full name (non-null, non-empty)
+     * @param age  patient's age (non-negative)
+     */
     public Patient(String name, int age) {
-        this.name = name;          // "this" refers to the current object's field
-        this.age = age;            // (requirement: usage of "this")
-        this.id = ++admissionCounter; // each new patient gets the next ID
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Patient name cannot be null or empty.");
+        }
+        if (age < 0) {
+            throw new IllegalArgumentException("Patient age cannot be negative: " + age);
+        }
+
+        synchronized (Patient.class) {
+            this.id = ++idSequence;
+        }
+        this.name = name.trim();
+        this.age = age;
         this.doctorName = null;
     }
 
     // Getters
-    public int getId() { return id; }
-    public String getName() { return name; }
-    public int getAge() { return age; }
-    public String getDoctorName() { return doctorName; }
-
-    // Treatable interface method
-    @Override
-    public void assignDoctor(String doctorName) {
-        this.doctorName = doctorName;
+    public int getId() {
+        return id;
     }
 
-    // Static getter for the shared counter
-    public static int getAdmissionCounter() {
+    public String getName() {
+        return name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public String getDoctorName() {
+        return doctorName;
+    }
+
+    public boolean isAdmitted() {
+        return admitted;
+    }
+
+    /**
+     * Marks this patient as successfully admitted and increments the static admission counter.
+     */
+    public synchronized void markAdmitted() {
+        if (!this.admitted) {
+            this.admitted = true;
+            incrementAdmissionCounter();
+        }
+    }
+
+    /**
+     * Static counter for successfully admitted patients.
+     */
+    public static synchronized int getAdmissionCounter() {
         return admissionCounter;
     }
 
-    // Abstract method: every subclass must provide its own billing rule.
+    /**
+     * Increments the shared static admission counter.
+     */
+    public static synchronized void incrementAdmissionCounter() {
+        admissionCounter++;
+    }
+
+    /**
+     * Resets the static admission counter and id sequence (useful for testing).
+     */
+    public static synchronized void resetCounters() {
+        admissionCounter = 0;
+        idSequence = 0;
+    }
+
+    /**
+     * Implementation of Treatable interface.
+     */
+    @Override
+    public void assignDoctor(String doctorName) {
+        if (doctorName == null || doctorName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Doctor name cannot be null or empty.");
+        }
+        this.doctorName = doctorName.trim();
+    }
+
+    /**
+     * Abstract method: Each subclass provides its own billing formula.
+     *
+     * @return calculated total bill
+     */
     public abstract double calculateBill();
+
+    /**
+     * Meaningful display of common patient details.
+     */
+    public void displayDetails() {
+        System.out.println("Patient ID       : " + id);
+        System.out.println("Patient Name     : " + name);
+        System.out.println("Patient Age      : " + age);
+        System.out.println("Assigned Doctor  : " + (doctorName != null ? doctorName : "Not Assigned"));
+        System.out.println("Admission Status : " + (admitted ? "Successfully Admitted" : "Pending / Not Admitted"));
+    }
 
     @Override
     public String toString() {
         String doc = (doctorName == null) ? "Not assigned" : doctorName;
-        return "Patient[ID=" + id + ", name=" + name + ", age=" + age + ", doctor=" + doc + "]";
+        return String.format("Patient[ID=%d, name='%s', age=%d, doctor='%s', admitted=%b]",
+                id, name, age, doc, admitted);
     }
 }

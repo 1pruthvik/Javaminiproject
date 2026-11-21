@@ -1,71 +1,84 @@
-# Hospital Patient Management (Java Mini Project)
+# Hospital Patient Management System (P11)
 
-A simple, well-structured Java project that demonstrates core Java concepts
-for a hospital that admits patients and generates bills.
+A robust, enterprise-grade Java OOP and Multithreading demonstration project implementing a complete Hospital Patient Management System.
 
-## Concepts covered
+## Architecture and Core Concepts
 
-1. **Class + `this` + static counter** — `Patient` has `id`, `name`, `age`.
-   The constructor uses `this` and a `static int admissionCounter` to
-   auto-assign a unique ID to every patient.
-2. **Inheritance (abstract class)** — `Patient` is `abstract`; `InPatient`
-   and `OutPatient` extend it and each `@Override` `calculateBill()`.
-3. **Interface + package** — `Treatable` interface (with `assignDoctor`)
-   lives in the `hospital` package and is implemented by `Patient`.
-4. **Custom Exception** — `BedNotAvailableException` is thrown when no bed
-   is free, and handled with `try` / `catch` / `finally`.
-5. **Threads + synchronization** — `AdmissionCounter` extends `Thread`.
-   An `Emergency` counter and a `General` counter admit patients at the
-   same time, sharing one `BedManager`. `BedManager.allocateBed()` is
-   `synchronized` so the two threads never hand out the same bed.
+1. **Classes and Objects**: Encapsulation of domain models (`Patient`, `InPatient`, `OutPatient`, `BedManager`, `AdmissionCounter`).
+2. **Static Variables**: Thread-safe global `admissionCounter` tracking only successfully admitted patients, and `idSequence` for unique patient IDs.
+3. **Abstract Classes & Methods**: `Patient` is an abstract base class defining common state and the contract `abstract double calculateBill()`.
+4. **Inheritance**: `InPatient` and `OutPatient` extend `Patient`, reusing base properties and adding specialized attributes.
+5. **Method Overriding & Polymorphism**: Both subclasses override `calculateBill()` with distinct formulas and override `displayDetails()`.
+6. **Interfaces**: `Treatable` interface in package `hospital` enforces doctor assignment via `assignDoctor(String)`.
+7. **Package Structure**: Clean package organization under `hospital`.
+8. **User-defined Exceptions**: `BedNotAvailableException` thrown when bed capacity is exceeded.
+9. **Exception Handling (`try-catch-finally`)**: Structured exception handling ensuring `finally` executes for every admission request.
+10. **Multithreading**: Concurrent execution of `Emergency` and `General` admission threads (`AdmissionCounter extends Thread`).
+11. **Synchronization**: Atomic critical section in `BedManager.allocateBed(InPatient)` protecting bed availability checks, allocation, bed count updates, and admission confirmation.
+12. **Shared Resource Management**: Competing threads safely coordinate over a single shared `BedManager` without race conditions or capacity violations.
 
-## Project structure
+## Billing Formulas
+
+- **InPatient Bill**: `(Days Admitted × Daily Room Charges) + Doctor Charges + Treatment Charges`
+- **OutPatient Bill**: `Consultation Charges + Treatment Charges + Diagnostic Charges`
+
+*Note: Outpatients do not consume hospital inpatient beds.*
+
+## Project Structure
 
 ```
-Javaminiproject/
-├── src/
-│   └── hospital/
-│       ├── Treatable.java              # interface (package hospital)
-│       ├── BedNotAvailableException.java  # custom exception
-│       ├── Patient.java               # abstract base class
-│       ├── InPatient.java             # inherits Patient
-│       ├── OutPatient.java            # inherits Patient
-│       ├── BedManager.java            # synchronized bed allocation
-│       ├── AdmissionCounter.java       # Thread subclass
-│       └── HospitalMain.java           # main() entry point
-└── README.md
+Java_Mini_project/
+├── .gitignore
+├── LICENSE
+├── README.md
+├── run.sh
+└── src/
+    └── hospital/
+        ├── Treatable.java               # Interface
+        ├── BedNotAvailableException.java # Custom checked exception
+        ├── Patient.java                 # Abstract base class
+        ├── InPatient.java               # InPatient subclass
+        ├── OutPatient.java              # OutPatient subclass
+        ├── BedManager.java              # Synchronized shared bed allocator
+        ├── AdmissionCounter.java        # Thread subclass for concurrent admissions
+        ├── HospitalMain.java            # Main entry point (Full demonstration)
+        └── HospitalSystemTest.java      # Comprehensive automated verification suite
 ```
 
-## How to compile and run
+## How to Compile and Run
 
-You need the Java JDK (version 8 or newer).
+### Windows (PowerShell / Command Prompt):
+```powershell
+# Compile all sources into bin directory
+mkdir -Force bin
+javac -d bin src/hospital/*.java
 
-**Linux / macOS:**
+# Run the complete demonstration
+java -cp bin hospital.HospitalMain
+
+# Run the automated verification test suite
+java -cp bin hospital.HospitalSystemTest
+```
+
+### Linux / macOS:
 ```bash
-# From the project root (Javaminiproject/)
+# Compile and run
 mkdir -p bin
 javac -d bin src/hospital/*.java
 java -cp bin hospital.HospitalMain
-```
 
-**Windows (Command Prompt):**
-```cmd
-mkdir bin
-javac -d bin src\hospital\*.java
-java -cp bin hospital.HospitalMain
-```
-
-Or simply use the provided helper script (Linux/macOS):
-```bash
+# Or use the helper script:
 chmod +x run.sh
 ./run.sh
 ```
 
-## Expected output (summary)
+## Automated Test Suite Coverage
 
-- Prints each admitted patient with their assigned doctor and calculated bill.
-- Shows the static admission counter increasing.
-- Demonstrates `BedNotAvailableException` being caught in a `try-catch-finally`.
-- Runs the Emergency and General counters concurrently; because only 3 beds
-  are shared, the later admission attempts fail with the custom exception,
-  proving the `synchronized` bed allocation works across threads.
+The project includes `HospitalSystemTest.java` validating:
+- **TEST 1**: Patient creation, unique ID generation, and input validation (rejecting negative age, negative billing rates).
+- **TEST 2**: Polymorphic dispatch and billing calculations for both `InPatient` and `OutPatient`.
+- **TEST 3**: `Treatable` interface implementation and doctor assignment.
+- **TEST 4**: Static counter accuracy — verifying failed admissions do NOT increment the admission counter.
+- **TEST 5**: `BedNotAvailableException` throwing, catching, and `finally` block execution.
+- **TEST 6 & 7**: Multithreaded concurrency, race condition prevention, and strict bed capacity invariants.
+- **TEST 8**: Full end-to-end application workflow.
