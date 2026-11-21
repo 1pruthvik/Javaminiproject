@@ -1,4 +1,4 @@
-# Hospital Patient Management (Java Mini Project)
+# Hospital Patient Management(Java Mini Project)
 
 A simple, well-structured Java project that demonstrates core Java concepts
 for a hospital that admits patients and generates bills.
